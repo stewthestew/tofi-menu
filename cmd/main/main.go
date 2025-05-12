@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"tofi/internal/backend"
+
+	"github.com/charmbracelet/log"
 )
 
 func main() {
@@ -56,27 +58,29 @@ func main() {
 	}
 
 	executedCmd := exec.Command(selectedCmd)
-	executedCmd.Stdout = os.Stdout
-	executedCmd.Stdin = os.Stdin
-	executedCmd.Stderr = os.Stderr
 	// .RUN() Is blocking which is good for tui apps, but for gui's? No.
 	var choice string
 	fmt.Println("Do you want to run this in the current window? [y\\N]")
-	// TODO: Use a buffer reader instead (Most likely will never do)
 	_, err = fmt.Scanln(&choice)
 	if err != nil {
-		log.Error("Failed to read input", err)
-		err = executedCmd.Run()
+		log.Error(err)
 	}
 
 	switch strings.ToLower(choice) {
-	case "y":
+	case "y", "yes":
+		executedCmd.Stdout = os.Stdout
+		executedCmd.Stdin = os.Stdin
+		executedCmd.Stderr = os.Stderr
+
 		err = executedCmd.Run()
-	case "yes":
-		err = executedCmd.Run()
-	case "n":
-		err = executedCmd.Start()
-	case "no":
+	case "n", "no", "\n":
+		executedCmd.Stdout = nil
+		executedCmd.Stderr = nil
+		executedCmd.Stdin = nil
+		executedCmd.SysProcAttr = &syscall.SysProcAttr{
+			Setsid: true,
+		}
+
 		err = executedCmd.Start()
 	default:
 		log.Info("Choosing default")
