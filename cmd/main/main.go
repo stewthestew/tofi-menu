@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
-	"tofi/internal/ui"
-
-	tea "github.com/charmbracelet/bubbletea"
+	"log"
+	"os"
+	"tofi/internal/backend"
 )
 
 func main() {
-	p := tea.NewProgram(ui.NewModel())
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error happened when opening prog %v", err)
+	list, err := backend.List(os.Getenv("PATH"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, v := range list {
+		fmt.Println(v)
 	}
 }
