@@ -66,6 +66,10 @@ func main() {
 		log.Error(err)
 	}
 
+	if strings.ToLower(choice) == "" || strings.ToLower(choice) == "\n" {
+		choice = "n"
+	}
+
 	switch strings.ToLower(choice) {
 	case "y", "yes":
 		executedCmd.Stdout = os.Stdout
@@ -73,7 +77,7 @@ func main() {
 		executedCmd.Stderr = os.Stderr
 
 		err = executedCmd.Run()
-	case "n", "no", "\n":
+	case "n", "no":
 		executedCmd.Stdout = nil
 		executedCmd.Stderr = nil
 		executedCmd.Stdin = nil
