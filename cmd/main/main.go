@@ -26,10 +26,11 @@ func main() {
 	a := strings.Join(list, "\n")
 
 	cmd := exec.Command(fzf)
-	cmd.Stdout = os.Stdout
 	cmd.Stdin = strings.NewReader(a)
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	selected, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// The reason for this is: I assuming am if the program exits with an error with 0 or 1 it errors out. So I am only handling the error if the debug env var is set.
 	// This pattern will be used throughout the code.
@@ -40,7 +41,7 @@ func main() {
 		}
 	}
 
-	selected, err := cmd.Output()
+	fmt.Println("selected", string(selected))
 	if err != nil {
 		if len(os.Getenv("DEBUG")) > 0 {
 			log.Fatal(err)
@@ -56,6 +57,7 @@ func main() {
 
 	executedCmd := exec.Command(selectedCmd)
 	executedCmd.Stdout = os.Stdout
+	executedCmd.Stdin = os.Stdin
 	executedCmd.Stderr = os.Stderr
 	err = executedCmd.Run()
 
