@@ -1,3 +1,4 @@
+![Go Workflow](https://github.com/stewthestew/tofi-menu/actions/workflows/go.yml/badge.svg)
 # Tofi
 Tofi or Tofi-menu is a simple app launcher for the terminal
 
