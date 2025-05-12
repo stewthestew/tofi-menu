@@ -35,6 +35,7 @@ func walkDir(PATH string) ([]string, error) {
 	}
 	return paths, nil
 }
+
 // TODO: Switch to SplitSeq
 func List(PATH string) ([]string, error) {
 	var pathArray []string

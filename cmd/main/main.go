@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 	"tofi/internal/backend"
 )
 
@@ -12,7 +13,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, v := range list {
-		fmt.Println(v)
+
+	a := strings.Join(list, "\n")
+
+	cmd := exec.Command("/bin/sh", "-c", a)
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = strings.NewReader(a)
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
