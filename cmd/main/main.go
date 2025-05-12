@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/charmbracelet/log"
 	"os"
 	"os/exec"
 	"strings"
@@ -30,6 +30,10 @@ func main() {
 	cmd.Stdin = strings.NewReader(a)
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
+
+	// The reason for this is: I assuming am if the program exits with an error with 0 or 1 it errors out. So I am only handling the error if the debug env var is set.
+	// This pattern will be used throughout the code.
+	// ^I turned out to be kind of right, apparently fzf when exiting without selecting something it exists with exit code "130"
 	if err != nil {
 		if len(os.Getenv("DEBUG")) > 0 {
 			log.Fatal(err)
@@ -46,6 +50,7 @@ func main() {
 	selectedCmd := strings.TrimSpace(string(selected))
 
 	if selectedCmd == "" {
+		fmt.Println("No command selected. Exiting...")
 		return
 	}
 
@@ -53,9 +58,9 @@ func main() {
 	executedCmd.Stdout = os.Stdout
 	executedCmd.Stderr = os.Stderr
 	err = executedCmd.Run()
+
+	// In here I won't ignore the error when the debug env var is set, because you most likely won't run fzf anyway.
 	if err != nil {
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 	}
 }
