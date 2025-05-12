@@ -59,8 +59,9 @@ func main() {
 	executedCmd.Stderr = os.Stderr
 	err = executedCmd.Run()
 
-	// In here I won't ignore the error when the debug env var is set, because you most likely won't run fzf anyway.
 	if err != nil {
-		log.Fatal(err)
+		if len(os.Getenv("IMPORTANT_DEBUG")) > 0 {
+			log.Fatal(err)
+		}
 	}
 }

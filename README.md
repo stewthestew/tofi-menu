@@ -22,3 +22,11 @@ cd tofi-menu
 go build -o tofi cmd/main/main.go
 mv ./tofi ~/go/bin/ # Or wherever you want to put it
 ```
+### Important info
+Tofi-menu uses 3 different environment variables:
+
+1. FZF_PATH: The path to the fzf binary.
+2. DEBUG: If this is set, then less important errors will be handled (Read code for more info)
+3. IMPORTANT_DEBUG: If this is set, then errors from the selected command will be handled (Read code for more info)
+4. And of course you need PATH to be set
+
