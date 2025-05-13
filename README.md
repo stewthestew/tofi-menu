@@ -36,3 +36,9 @@ export TOFI_APPS=$PATH
 ```
 
 You can also change TOFI_APPS to point at specific directories so you can launch custom scripts, etc.
+
+## Dependencies 
+1. Fzf
+2. A Unix-type system, like: Macos or Linux, Windows most likely won't work correctly
+3. Go >1.24.0
+4. Any type of terminal emulator
