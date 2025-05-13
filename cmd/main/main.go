@@ -15,16 +15,21 @@ import (
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	list, err := backend.List(os.Getenv("PATH"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fzf := os.Getenv("FZF_PATH")
+	var DEBUG bool
+
+	if len(os.Getenv("DEBUG")) > 0 {
+		DEBUG = true
+	}
 
 	if len(os.Getenv("FZF_PATH")) == 0 {
 		fmt.Println("Could not find fzf in FZF_PATH. If the environment variable FZF_PATH is not set to the fzf binary, please set it to the fzf binary.")
 		fmt.Println("Trying to run it anyway...")
 		fzf = "fzf"
-	}
-
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	a := strings.Join(list, "\n")
@@ -37,14 +42,8 @@ func main() {
 	// This pattern will be used throughout the code.
 	// ^I turned out to be kind of right, apparently fzf when exiting without selecting something it exists with exit code "130"
 	if err != nil {
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Fatal(err)
-		}
-	}
-
-	if err != nil {
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Fatal(err)
+		if DEBUG {
+			log.Error("Fzf errored out", err)
 		}
 	}
 
@@ -55,7 +54,7 @@ func main() {
 		return
 	}
 
-	if len(os.Getenv("DEBUG")) > 0 {
+	if DEBUG {
 		log.Debug("selected", selectedCmd)
 	}
 
@@ -93,8 +92,7 @@ func main() {
 	}
 
 	if err != nil {
-		if len(os.Getenv("IMPORTANT_DEBUG")) > 0 {
-			log.Fatal(err)
-		}
+		log.Error(err)
 	}
+
 }
