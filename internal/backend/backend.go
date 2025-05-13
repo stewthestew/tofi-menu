@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 func walkDir(PATH string) ([]string, error) {
@@ -36,24 +38,23 @@ func walkDir(PATH string) ([]string, error) {
 	return paths, nil
 }
 
-// TODO: Switch to SplitSeq
 func List(PATH string) ([]string, error) {
 	var pathArray []string
-	PATHS := strings.Split(PATH, ":")
+	PATHS := strings.SplitSeq(PATH, ":")
 
-	for _, v := range PATHS {
-		if v == "" {
-			continue
-		}
-
+	PATHS(func(v string) bool {
 		execs, err := walkDir(v)
+
 		if err != nil {
-			continue
+			log.Error(err)
 		}
 
 		for _, exe := range execs {
 			pathArray = append(pathArray, exe)
 		}
-	}
+
+		return true
+	})
+
 	return pathArray, nil
 }
