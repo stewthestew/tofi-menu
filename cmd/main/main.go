@@ -14,7 +14,7 @@ import (
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	list, err := backend.List(os.Getenv("PATH"))
+	list, err := backend.List(os.Getenv("TOFI_APPS"))
 	if err != nil {
 		log.Fatal(err)
 	}
