@@ -71,8 +71,6 @@ func main() {
 	choice = strings.TrimSpace(choice)
 
 	switch strings.ToLower(choice) {
-	case "q", "quit":
-		log.Info("Bye!")
 
 	case "n", "no":
 		executedCmd.Stdout = nil
@@ -82,12 +80,15 @@ func main() {
 			Setsid: true,
 		}
 		err = executedCmd.Start()
-	default:
+	case "y", "yes":
 		executedCmd.Stdout = os.Stdout
 		executedCmd.Stdin = os.Stdin
 		executedCmd.Stderr = os.Stderr
 
 		err = executedCmd.Run()
+
+	default:
+		log.Info("Bye!")
 
 	}
 
