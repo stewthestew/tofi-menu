@@ -2,7 +2,10 @@ module tofi
 
 go 1.24.3
 
-require github.com/charmbracelet/log v0.4.2
+require (
+	github.com/charmbracelet/log v0.4.2
+	github.com/spf13/pflag v1.0.6
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

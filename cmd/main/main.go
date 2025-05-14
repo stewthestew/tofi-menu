@@ -8,22 +8,23 @@ import (
 	"strings"
 	"syscall"
 	"tofi/internal/backend"
+	"tofi/internal/cli"
 
 	"github.com/charmbracelet/log"
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
+	selectedArgs, args := cli.Parse()
+
 	list, err := backend.List(os.Getenv("TOFI_APPS"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fzf := os.Getenv("FZF_PATH")
-	var DEBUG bool
 
 	if len(os.Getenv("DEBUG")) > 0 {
-		DEBUG = true
+		log.SetLevel(log.DebugLevel)
 	}
 
 	if len(os.Getenv("FZF_PATH")) == 0 {
@@ -42,9 +43,7 @@ func main() {
 	// This pattern will be used throughout the code.
 	// ^I turned out to be kind of right, apparently fzf when exiting without selecting something it exists with exit code "130"
 	if err != nil {
-		if DEBUG {
-			log.Error("Fzf errored out", err)
-		}
+		log.Debug("Fzf errored out", err)
 	}
 
 	selectedCmd := strings.TrimSpace(string(selected))
@@ -54,21 +53,27 @@ func main() {
 		return
 	}
 
-	if DEBUG {
-		log.Debug("selected", selectedCmd)
-	}
+	log.Debug("selected", selectedCmd)
 
-	executedCmd := exec.Command(selectedCmd)
+	fields := strings.Fields(selectedCmd)
+	executedCmd := exec.Command(fields[0], fields[1:]...)
 	// .RUN() Is blocking which is good for tui apps, but for gui's? No.
-	fmt.Print("Do you want to run this in the current window? [yes\\no\\Quit]\n: ")
 
 	var choice string
-	choice, err = reader.ReadString('\n')
-	if err != nil {
-		log.Error(err)
-	}
+	if cli.CountTrue(selectedArgs) == 0 {
+		reader := bufio.NewReader(os.Stdin)
 
-	choice = strings.TrimSpace(choice)
+		fmt.Print("Do you want to run this in the current window? [yes\\no\\Quit]\n: ")
+
+		choice, err = reader.ReadString('\n')
+		if err != nil {
+			log.Error(err)
+		}
+
+		choice = strings.TrimSpace(choice)
+	} else {
+		choice = args.Choice.String()
+	}
 
 	switch strings.ToLower(choice) {
 
@@ -80,15 +85,18 @@ func main() {
 			Setsid: true,
 		}
 		err = executedCmd.Start()
+
 	case "y", "yes":
 		executedCmd.Stdout = os.Stdout
 		executedCmd.Stdin = os.Stdin
 		executedCmd.Stderr = os.Stderr
 
 		err = executedCmd.Run()
+	case "q", "quit", "":
+		log.Info("Bye!")
 
 	default:
-		log.Info("Bye!")
+		log.Fatalf("Invalid argument")
 
 	}
 
