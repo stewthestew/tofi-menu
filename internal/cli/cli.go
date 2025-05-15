@@ -11,6 +11,7 @@ const (
 	Yes Choice = iota
 	No
 	Quit
+	Dry
 )
 
 func (c Choice) String() string {
@@ -21,6 +22,8 @@ func (c Choice) String() string {
 		return "No"
 	case Quit:
 		return "Quit"
+	case Dry:
+		return "Dry"
 	default:
 		return "Unknown" // Just here for future proofing if needed.
 	}
@@ -31,13 +34,14 @@ type Arguments struct {
 }
 
 func Parse() ([]bool, Arguments) {
-	var yes, no, quit bool
+	var yes, no, quit, dry bool
 	flag.BoolVarP(&yes, "yes", "y", false, "Launch in current terminal window")
 	flag.BoolVarP(&no, "no", "n", false, "Don't launch in current terminal window")
 	flag.BoolVarP(&quit, "quit", "q", false, "Quit before launching the application")
+	flag.BoolVarP(&dry, "dry", "d", false, "Don't execute the selection, just print it")
 	flag.Parse()
 
-	selected := []bool{yes, no, quit}
+	selected := []bool{yes, no, dry, quit}
 	if CountTrue(selected) > 1 {
 		log.Fatal("You can only choose one from: [yes, no, quit]")
 	}
@@ -50,6 +54,8 @@ func Parse() ([]bool, Arguments) {
 		choice = No
 	case quit:
 		choice = Quit
+	case dry:
+		choice = Dry
 	}
 	return selected, Arguments{Choice: choice}
 }
