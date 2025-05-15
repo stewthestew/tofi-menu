@@ -39,7 +39,7 @@ You can also change TOFI_APPS to point at specific directories so you can launch
 
 ## Diagram
 
-I was too lazy to make my own diagram of how tofi works so this should be good enough
+I was too lazy to make my own diagram of how tofi works so this LLM diagram should be good enough
 ```text
 main()
 │
