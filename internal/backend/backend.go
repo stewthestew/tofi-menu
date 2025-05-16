@@ -1,19 +1,13 @@
 package backend
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"tofi/internal/utils"
+
 	"github.com/charmbracelet/log"
 )
-
-
-func Log(level log.Level, silent bool, msg any, keyvals ...any) {
-	if !silent {
-		log.Log(level, msg, keyvals)
-	}
-}
 
 func walkDir(PATH string) ([]string, error) {
 	paths := []string{}
@@ -46,6 +40,10 @@ func walkDir(PATH string) ([]string, error) {
 }
 
 func List(PATH string, silent bool) ([]string, error) {
+	if silent {
+		log.SetOutput(io.Discard)
+	}
+
 	var pathArray []string
 	PATHS := strings.SplitSeq(PATH, ":")
 
@@ -53,7 +51,7 @@ func List(PATH string, silent bool) ([]string, error) {
 		execs, err := walkDir(v)
 
 		if err != nil {
-			utils.Log(log.ErrorLevel, silent, err)
+			log.Error(err)
 		}
 
 		for _, exe := range execs {

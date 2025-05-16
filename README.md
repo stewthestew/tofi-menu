@@ -24,11 +24,12 @@ go build -o tofi cmd/main/main.go
 mv ./tofi ~/go/bin/ # Or wherever you want to put it
 ```
 ### Important info
-Tofi-menu uses 3 different environment variables:
+Tofi-menu uses these different environment variables:
 
-1. LAUNCH_APP: The path to the fzf binary. (Optional, if not set then it will just execute fzf normally)
-2. DEBUG: If this is set, then less important errors will be handled (Read code for more info) (Optional)
+1. LAUNCH_APP: The path to the fzf binary. (Optional, if not set then it will just execute fzf normally).
+2. DEBUG: If this is set, then less important errors will be handled (Read code for more info) (Optional).
 3. TOFI_APPS: This acts like the PATH variable, this is where tofi will get the executables from.
+4. SILENT: This silences the output of the program, it will not print anything to the terminal.
 
 If you want it to list every app then do 
 ```bash

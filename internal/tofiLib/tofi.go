@@ -3,6 +3,7 @@ package tofiLib
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,7 +11,6 @@ import (
 
 	"tofi/internal/backend"
 	"tofi/internal/cli"
-	"tofi/internal/utils"
 
 	"github.com/charmbracelet/log"
 )
@@ -48,8 +48,8 @@ func EnvVarsInit(silent bool) EnvVars {
 	var launchApp string
 
 	if len(os.Getenv("LAUNCH_APP")) == 0 {
-		utils.Log(log.WarnLevel, silent, "Could not find fzf in FZF_PATH. If the environment variable FZF_PATH is not set to the fzf binary, please set it to the fzf binary.")
-		utils.Log(log.WarnLevel, silent, "Trying to run it anyway...")
+		log.Warn("Could not find fzf in FZF_PATH. If the environment variable FZF_PATH is not set to the fzf binary, please set it to the fzf binary.")
+		log.Warn("Trying to run it anyway...")
 		launchApp = "fzf"
 	}
 
@@ -60,14 +60,12 @@ func EnvVarsInit(silent bool) EnvVars {
 }
 
 func Tofi(opts TofiOptions, vars EnvVars) {
-	if vars.Debug {
-		log.SetLevel(log.DebugLevel)
+	if opts.Silent {
+		log.SetOutput(io.Discard)
 	}
 
-	if len(os.Getenv("LAUNCH_APP")) == 0 {
-		utils.Log(log.WarnLevel, opts.Silent, "Could not find fzf in FZF_PATH. If the environment variable FZF_PATH is not set to the fzf binary, please set it to the fzf binary.")
-		utils.Log(log.WarnLevel, opts.Silent, "Trying to run it anyway...")
-		vars.LaunchApp = "fzf"
+	if vars.Debug {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	a := strings.Join(opts.List, "\n")
@@ -80,17 +78,17 @@ func Tofi(opts TofiOptions, vars EnvVars) {
 	// This pattern will be used throughout the code.
 	// ^I turned out to be kind of right, apparently fzf when exiting without selecting something it exists with exit code "130"
 	if err != nil {
-		utils.Log(log.DebugLevel, opts.Silent, "Fzf errored out", err)
+		log.Debug("Fzf errored out", err)
 	}
 
 	selectedCmd := strings.TrimSpace(string(selected))
 
 	if selectedCmd == "" {
-		utils.Log(log.InfoLevel, opts.Silent, "No command selected. Exiting...")
+		log.Info("No command selected. Exiting...")
 		return
 	}
 
-	utils.Log(log.DebugLevel, opts.Silent, "selected", selectedCmd)
+	log.Debug("selected", selectedCmd)
 
 	fields := strings.Fields(selectedCmd)
 	executedCmd := exec.Command(fields[0], fields[1:]...)
@@ -104,7 +102,7 @@ func Tofi(opts TofiOptions, vars EnvVars) {
 
 		choice, err = reader.ReadString('\n')
 		if err != nil {
-			utils.Log(log.ErrorLevel, opts.Silent, err)
+			log.Fatal(err)
 		}
 
 		choice = strings.TrimSpace(choice)
@@ -112,7 +110,7 @@ func Tofi(opts TofiOptions, vars EnvVars) {
 		choice = opts.Args.Choice.String()
 	}
 
-	utils.Log(log.DebugLevel, opts.Silent, "User selected:", choice)
+	log.Debug("User selected:", choice)
 
 	switch strings.ToLower(choice) {
 
@@ -134,16 +132,14 @@ func Tofi(opts TofiOptions, vars EnvVars) {
 
 		err = executedCmd.Run()
 	case "q", "quit", "":
-		utils.Log(log.InfoLevel, opts.Silent, "Bye!")
+		log.Info("Bye!")
 
 	default:
 		log.Fatalf("Invalid argument")
-		utils.Log(log.FatalLevel, opts.Silent, "Invalid argument")
-
 	}
 
 	if err != nil {
-		utils.Log(log.ErrorLevel, opts.Silent, err)
+		log.Fatal(err)
 	}
 
 }
