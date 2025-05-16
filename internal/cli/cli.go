@@ -47,9 +47,9 @@ func Parse() ([]bool, Arguments) {
 	flag.BoolVarP(&version, "version", "v", false, "Print the current version")
 	flag.Parse()
 
-	selected := []bool{yes, no, dry, quit}
+	selected := []bool{yes, no, dry, quit, version}
 	if CountTrue(selected) > 1 {
-		log.Fatal("You can only choose one from: [yes, no, quit]")
+		log.Fatal("You can only choose one from: [yes, no, quit, dry, version]")
 	}
 
 	var choice Choice
