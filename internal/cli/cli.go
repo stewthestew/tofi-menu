@@ -10,7 +10,7 @@ import (
 
 type Choice int
 
-const Version = "1.1.0"
+const Version = "1.1.1"
 
 const (
 	Yes Choice = iota
