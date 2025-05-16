@@ -1,11 +1,16 @@
 package cli
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/charmbracelet/log"
 	flag "github.com/spf13/pflag"
 )
 
 type Choice int
+
+const Version = "1.1.0"
 
 const (
 	Yes Choice = iota
@@ -34,11 +39,12 @@ type Arguments struct {
 }
 
 func Parse() ([]bool, Arguments) {
-	var yes, no, quit, dry bool
+	var yes, no, quit, dry, version bool
 	flag.BoolVarP(&yes, "yes", "y", false, "Launch in current terminal window")
 	flag.BoolVarP(&no, "no", "n", false, "Don't launch in current terminal window")
 	flag.BoolVarP(&quit, "quit", "q", false, "Quit before launching the application")
 	flag.BoolVarP(&dry, "dry", "d", false, "Don't execute the selection, just print it")
+	flag.BoolVarP(&version, "version", "v", false, "Print the current version")
 	flag.Parse()
 
 	selected := []bool{yes, no, dry, quit}
@@ -56,6 +62,9 @@ func Parse() ([]bool, Arguments) {
 		choice = Quit
 	case dry:
 		choice = Dry
+	case version:
+		fmt.Println("Tofi-menu version:", Version)
+		os.Exit(0)
 	}
 	return selected, Arguments{Choice: choice}
 }

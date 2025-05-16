@@ -2,6 +2,7 @@ package tofiLib
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/charmbracelet/log"
 )
+
+const DefaultLaunchApp = "fzf"
 
 type TofiOptions struct {
 	SelectedArgs []bool
@@ -29,7 +32,7 @@ type EnvVars struct {
 
 func TofiOptionsInit() TofiOptions {
 	selectedArgs, args := cli.Parse()
-	silent := os.Getenv("TOFI_SILENT") != ""
+	silent := os.Getenv("SILENT") != ""
 
 	list, err := backend.List(os.Getenv("TOFI_APPS"), silent)
 	if err != nil {
@@ -45,12 +48,11 @@ func TofiOptionsInit() TofiOptions {
 }
 
 func EnvVarsInit(silent bool) EnvVars {
-	var launchApp string
-
-	if len(os.Getenv("LAUNCH_APP")) == 0 {
+	launchApp := os.Getenv("LAUNCH_APP")
+	if launchApp == "" {
 		log.Warn("Could not find fzf in FZF_PATH. If the environment variable FZF_PATH is not set to the fzf binary, please set it to the fzf binary.")
 		log.Warn("Trying to run it anyway...")
-		launchApp = "fzf"
+		launchApp = DefaultLaunchApp
 	}
 
 	return EnvVars{
@@ -59,18 +61,65 @@ func EnvVarsInit(silent bool) EnvVars {
 	}
 }
 
-func Tofi(opts TofiOptions, vars EnvVars) {
-	if opts.Silent {
+func Execute(o TofiOptions, e EnvVars, executedCmd *exec.Cmd, selectedCmd string) error {
+	var choice string
+	var err error
+	if cli.CountTrue(o.SelectedArgs) == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		if !o.Silent {
+			fmt.Print("Do you want to run this in the current window? [yes\\no\\dry\\Quit]\n: ")
+		}
+
+		choice, err = reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+
+		choice = strings.TrimSpace(choice)
+	} else {
+		choice = o.Args.Choice.String()
+	}
+
+	log.Debug("User selected:", choice)
+
+	switch strings.ToLower(choice) {
+
+	case "n", "no":
+		executedCmd.SysProcAttr = &syscall.SysProcAttr{
+			Setsid: true,
+		}
+		err = executedCmd.Start()
+
+	case "d", "dry":
+		fmt.Print(selectedCmd)
+	case "y", "yes":
+		executedCmd.Stdout = os.Stdout
+		executedCmd.Stdin = os.Stdin
+		executedCmd.Stderr = os.Stderr
+
+		err = executedCmd.Run()
+	case "q", "quit", "":
+		log.Info("Bye!")
+
+	default:
+		return errors.New(fmt.Sprintf("Invalid argument %v", choice))
+	}
+
+	return nil
+}
+
+func Tofi(o TofiOptions, e EnvVars) {
+	if o.Silent {
 		log.SetOutput(io.Discard)
 	}
 
-	if vars.Debug {
+	if e.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	a := strings.Join(opts.List, "\n")
+	a := strings.Join(o.List, "\n")
 
-	cmd := exec.Command(vars.LaunchApp)
+	cmd := exec.Command(e.LaunchApp)
 	cmd.Stdin = strings.NewReader(a)
 	selected, err := cmd.Output()
 
@@ -94,52 +143,8 @@ func Tofi(opts TofiOptions, vars EnvVars) {
 	executedCmd := exec.Command(fields[0], fields[1:]...)
 	// .RUN() Is blocking which is good for tui apps, but for gui's? No.
 
-	var choice string
-	if cli.CountTrue(opts.SelectedArgs) == 0 {
-		reader := bufio.NewReader(os.Stdin)
-
-		fmt.Print("Do you want to run this in the current window? [yes\\no\\dry\\Quit]\n: ")
-
-		choice, err = reader.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		choice = strings.TrimSpace(choice)
-	} else {
-		choice = opts.Args.Choice.String()
-	}
-
-	log.Debug("User selected:", choice)
-
-	switch strings.ToLower(choice) {
-
-	case "n", "no":
-		executedCmd.Stdout = nil
-		executedCmd.Stderr = nil
-		executedCmd.Stdin = nil
-		executedCmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true,
-		}
-		err = executedCmd.Start()
-
-	case "d", "dry":
-		fmt.Print(selectedCmd)
-	case "y", "yes":
-		executedCmd.Stdout = os.Stdout
-		executedCmd.Stdin = os.Stdin
-		executedCmd.Stderr = os.Stderr
-
-		err = executedCmd.Run()
-	case "q", "quit", "":
-		log.Info("Bye!")
-
-	default:
-		log.Fatalf("Invalid argument")
-	}
-
+	err = Execute(o, e, executedCmd, selectedCmd)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }

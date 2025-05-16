@@ -1,11 +1,11 @@
 package main
 
 import (
-	"tofi/internal/tofiLib"
+	lib "tofi/internal/tofiLib"
 )
 
 func main() {
-	opts := tofiLib.TofiOptionsInit()
-	e := tofiLib.EnvVarsInit(opts.Silent)
-	tofiLib.Tofi(opts, e)
+	o := lib.TofiOptionsInit()
+	e := lib.EnvVarsInit(o.Silent)
+	lib.Tofi(o, e)
 }
