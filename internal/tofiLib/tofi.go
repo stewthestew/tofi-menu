@@ -1,7 +1,6 @@
 package tofiLib
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -9,7 +8,6 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
-
 	"tofi/internal/backend"
 	"tofi/internal/cli"
 
@@ -63,22 +61,35 @@ func EnvVarsInit(silent bool) EnvVars {
 
 func Execute(o TofiOptions, e EnvVars, executedCmd *exec.Cmd, selectedCmd string) error {
 	var choice string
-	var err error
 	if cli.CountTrue(o.SelectedArgs) == 0 {
-		reader := bufio.NewReader(os.Stdin)
+		reader := strings.NewReader("yes\nno")
 		if !o.Silent {
-			fmt.Print("Do you want to run this in the current window? [yes\\no\\dry\\Quit]\n: ")
-		}
-
-		choice, err = reader.ReadString('\n')
-		if err != nil {
-			return err
+			user := exec.Command(e.LaunchApp)
+			user.Stdin = reader
+			tempChoice, err := user.Output()
+			if err != nil {
+				return errors.New(fmt.Sprintf("Error reading launchApp output %v", err))
+			}
+			choice = strings.TrimSpace(string(tempChoice))
 		}
 
 		choice = strings.TrimSpace(choice)
 	} else {
 		choice = o.Args.Choice.String()
 	}
+
+	// if cli.CountTrue(selectedArgs) == 0 {
+	// 	user := exec.Command(fzf)
+	// 	user.Stdin = strings.NewReader("yes\nno")
+	// 	choiceb, err := user.Output()
+	// 	if err != nil {
+	// 		log.Error(err)
+	// 	}
+	//
+	// 	choice = strings.TrimSpace(string(choiceb))
+	// } else {
+	// 	choice = args.Choice.String()
+	// }
 
 	log.Debug("User selected:", choice)
 
@@ -88,7 +99,10 @@ func Execute(o TofiOptions, e EnvVars, executedCmd *exec.Cmd, selectedCmd string
 		executedCmd.SysProcAttr = &syscall.SysProcAttr{
 			Setsid: true,
 		}
-		err = executedCmd.Start()
+		err := executedCmd.Start()
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to Start process %v", err))
+		}
 
 	case "d", "dry":
 		fmt.Print(selectedCmd)
@@ -97,7 +111,11 @@ func Execute(o TofiOptions, e EnvVars, executedCmd *exec.Cmd, selectedCmd string
 		executedCmd.Stdin = os.Stdin
 		executedCmd.Stderr = os.Stderr
 
-		err = executedCmd.Run()
+		err := executedCmd.Run()
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to Run process %v", err))
+		}
+
 	case "q", "quit", "":
 		log.Info("Bye!")
 
@@ -122,7 +140,6 @@ func Tofi(o TofiOptions, e EnvVars) {
 	cmd := exec.Command(e.LaunchApp)
 	cmd.Stdin = strings.NewReader(a)
 	selected, err := cmd.Output()
-
 	// The reason for this is: I assuming am if the program exits with an error with 0 or 1 it errors out. So I am only handling the error if the debug env var is set.
 	// This pattern will be used throughout the code.
 	// ^I turned out to be kind of right, apparently fzf when exiting without selecting something it exists with exit code "130"
